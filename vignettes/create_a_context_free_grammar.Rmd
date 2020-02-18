@@ -1,0 +1,20 @@
+---
+title: "create_a_context_free_grammar"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{create_a_context_free_grammar}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(FSO)
+print("hi")
+```
