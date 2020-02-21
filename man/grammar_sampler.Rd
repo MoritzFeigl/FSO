@@ -6,7 +6,7 @@
 \usage{
 grammar_sampler(
   Grammar,
-  max.depth,
+  max_depth,
   n,
   save_feather = TRUE,
   parallel = TRUE,
@@ -16,7 +16,7 @@ grammar_sampler(
 \arguments{
 \item{Grammar}{A Grammar Object, created by the grammar() function.}
 
-\item{max.depth}{Maximum recursive depth used to create search Table.}
+\item{max_depth}{Maximum recursive depth used to create search Table.}
 
 \item{n}{Number of functions to be created from Grammar.}
 

@@ -1,7 +1,7 @@
 #' grammar_sampler
 #'
 #' @param Grammar    A Grammar Object, created by the grammar() function.
-#' @param max.depth Maximum recursive depth used to create search Table.
+#' @param max_depth Maximum recursive depth used to create search Table.
 #' @param n Number of functions to be created from Grammar.
 #' @param save_feather TRUE/FALSE, saves a feather of the output list
 #' @param parallel Should code be run parallel or not? TRUE or FALSE
@@ -23,34 +23,27 @@
 #'                                         gram_table = g_v1_table
 #'                                         max.depth = 5)
 grammar_sampler <- function(Grammar,
-                                max.depth,
+                            max_depth,
                                 n,
                                 save_feather = TRUE,
                                 parallel = TRUE,
                                 no_cores = NULL){
   # prepare grammar and table
-  gram_table <- search.table(cfgram, max.depth = max.depth)
-  gram <- Grammar
+
   if(parallel){
     library(parallel)
     # Calculate the number of cores
     if(is.null(no_cores)){
-      no_cores <- detectCores() - 2
+      if(parallel::detectCores() > 2){
+        no_cores <- parallel::detectCores() - 2
+      } else no_cores <- 1
     }
     ns <- rep(as.integer(n/no_cores), no_cores)
-    # old parLapply version -> problem with seeds for different cores
-    # Initiate cluster
-    #cl <- makeForkCluster(no_cores, seed = sample(1000, size = no_cores))
-    # functions_list <- parLapply(cl, ns, functions.creator,
-    #                             gram = gram,
-    #                             gram_table = gram_table,
-    #                             depth = max.depth)
-
-    # Parallel run with mclapply
+        # Parallel run with mclapply
     start <- Sys.time()
     cat("Run startet at: ", as.character(start))
     RNGkind("L'Ecuyer-CMRG")
-    functions_list <- mclapply(ns, .functions_creator, mc.cores = no_cores,
+    functions_list <- mclapply(ns, .grammar_sampler, mc.cores = no_cores,
                                gram = gram,
                                gram_table = gram_table,
                                depth = max.depth,
