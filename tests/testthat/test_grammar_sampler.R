@@ -3,27 +3,21 @@ context("Test grammar_sampler function")
 test_that("seed both equal", {
   test <- create_grammar(eq = "<eq> <op> <eq>,
                           <eq> <op> numeric,
-                          <eq> <op> var,
-                          <eq> <op> (<eq>),
-                          var,
                           <f> (var),
                           <f> (<eq>),
                           numeric",
-                         f = "exp, log, tan, sin",
+                         f = "exp, log",
                          op = "+, -, /, *")
 
   funs <- grammar_sampler(n = 50, grammar = test, max_depth = 10,
-                          no_cores = 3, seed = 123, save = FALSE)
+                          no_cores = 2, seed = 123, save = FALSE)
   funs2 <- grammar_sampler(n = 50, grammar = test, max_depth = 10,
-                           no_cores = 3, seed = 123, save = FALSE)
+                           no_cores = 2, seed = 123, save = FALSE)
   expect_identical(funs, funs2)
 })
 test_that("seed both different", {
   test <- create_grammar(eq = "<eq> <op> <eq>,
                           <eq> <op> numeric,
-                          <eq> <op> var,
-                          <eq> <op> (<eq>),
-                          var,
                           <f> (var),
                           <f> (<eq>),
                           numeric",
@@ -31,9 +25,9 @@ test_that("seed both different", {
                          op = "+, -, /, *")
 
   funs <- grammar_sampler(n = 50, grammar = test, max_depth = 10,
-                          no_cores = 3, seed = 123, save = FALSE)
+                          no_cores = 2, seed = 123, save = FALSE)
   funs2 <- grammar_sampler(n = 50, grammar = test, max_depth = 10,
-                           no_cores = 3, seed = 666, save = FALSE)
+                           no_cores = 2, seed = 666, save = FALSE)
   if(nrow(funs) == nrow(funs2)){
   expect_false(sum(funs == funs2) == nrow(funs))
   } else {
@@ -44,9 +38,6 @@ test_that("seed both different", {
 test_that("seed NULL", {
   test <- create_grammar(eq = "<eq> <op> <eq>,
                           <eq> <op> numeric,
-                          <eq> <op> var,
-                          <eq> <op> (<eq>),
-                          var,
                           <f> (var),
                           <f> (<eq>),
                           numeric",
@@ -54,9 +45,9 @@ test_that("seed NULL", {
                          op = "+, -, /, *")
 
   funs <- grammar_sampler(n = 50, grammar = test, max_depth = 10,
-                          no_cores = 3, seed = NULL, save = FALSE)
+                          no_cores = 2, seed = NULL, save = FALSE)
   funs2 <- grammar_sampler(n = 50, grammar = test, max_depth = 10,
-                           no_cores = 3, seed = NULL, save = FALSE)
+                           no_cores = 2, seed = NULL, save = FALSE)
   if(nrow(funs) == nrow(funs2)){
     expect_false(sum(funs == funs2) == nrow(funs))
   } else {
@@ -75,7 +66,6 @@ test_that("grammar_sampler output", {
 expect_equal(class(funs), "data.frame")
 })
 
-# old
 test_that("non recursive grammar", {
   test <- create_grammar(a = "<b><op><c>, <b><op><b>, <c><op><c>",
                          b = "2, 4",

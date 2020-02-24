@@ -176,9 +176,7 @@
   depth_counter <<- ifelse(exists("depth_counter"), depth_counter + 1, 1)
 
   # get nonterminal
-  nonterminals <- fun %>%
-    regmatches(., gregexpr("<(.*?)>", .)) %>%
-    unlist()
+  nonterminals <- unlist(regmatches(fun, gregexpr("<(.*?)>", fun)))
 
   # remove unsolved nonterminals from fun
   regmatches(fun, gregexpr("<(.*?)>", fun)) <- "%$&"

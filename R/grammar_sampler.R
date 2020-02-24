@@ -53,11 +53,10 @@ grammar_sampler <- function(n,
     RNGkind("L'Ecuyer-CMRG")
     set.seed(seed)
     parallel::mc.reset.stream()
-    output <- pbmcapply::pbmclapply(X = 1:n,
+    output <- unlist(pbmcapply::pbmclapply(X = 1:n,
                                     FUN = function(x) .grammar_sample(grammar = grammar,
                                                                       max_depth = max_depth),
-                                    mc.cores = as.integer(no_cores)) %>%
-      unlist()
+                                    mc.cores = as.integer(no_cores)))
   }
   # take unique functions
   if(unique)  output <- unique(output)
