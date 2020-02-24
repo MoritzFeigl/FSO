@@ -5,43 +5,40 @@
 \title{grammar_sampler}
 \usage{
 grammar_sampler(
-  Grammar,
-  max_depth,
   n,
-  save_feather = TRUE,
-  parallel = TRUE,
-  no_cores = NULL
+  grammar,
+  max_depth,
+  no_cores = NULL,
+  save = TRUE,
+  unique = TRUE,
+  seed = NULL
 )
 }
 \arguments{
-\item{Grammar}{A Grammar Object, created by the grammar() function.}
+\item{n}{Number of functions to be sampled from grammar}
 
-\item{max_depth}{Maximum recursive depth used to create search Table.}
+\item{grammar}{A Grammar Object, created by the create_grammar() function.}
 
-\item{n}{Number of functions to be created from Grammar.}
+\item{max_depth}{Maximum recursive depth used to sample grammar.}
 
-\item{save_feather}{TRUE/FALSE, saves a feather of the output list}
+\item{no_cores}{The number of cores for parallel computation. If NULL than all but 2 cores are used.}
 
-\item{parallel}{Should code be run parallel or not? TRUE or FALSE}
+\item{save}{TRUE/FALSE, saves a feather of the output in the current working directory.}
 
-\item{no_cores}{The number of cores for parallel computation. If NULL than no_cores = detectCores() - 2, hence all but 2 cores.}
+\item{unique}{Should only the uniquely sampled functions be kept.}
 }
 \value{
-Returns a df with all sampled grammar vectors and their corresponding functions. Each row is 1 grammar vector and 1 resulting function (last element).
+Returns a character vector of all sampled functions.
 }
 \description{
 grammar_sampler
 }
 \examples{
-g_v1 <- grammar(tf = "numeric * <eq> + numeric, <eq> + numeric, <eq> ",
-                eq = "<fs>, <eq><op><fs>, <eq><op>numeric, <fs><op>numeric",
-                fs = "<sp>,  <f>(<sp>), <sp><op><sp>, numeric",
-                f = "exp, log",
-                op = "+, -, *, /",
-                sp = "slope, evi, sand, clay, elevation, hand, noise")
-g_v1_table <- search.table(g_v1, max.depth = 3)
-my_function_list <- par_grammar_sampler(n = 30000000,
-                                        cfgram = g_v1,
-                                        gram_table = g_v1_table
-                                        max.depth = 5)
+simple_grammar <- create_grammar(a = "<b><op><c>, <a><op><b>, <a><op><c>, 1",
+                                 b = "2, 4",
+                                 c = "1, 3, 5",
+                                 op = "+, -")
+grammar_functions <- grammar_sampler(n = 300,
+                                     grammar = simple_grammar,
+                                     max_depth = 5)
 }

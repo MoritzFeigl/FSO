@@ -2,12 +2,12 @@ Package: FSO
 Title: What the Package Does (One Line, Title Case)
 Version: 0.0.0.9000
 Authors@R: 
-    person(given = "First",
-           family = "Last",
+    person(given = "Moritz",
+           family = "Feigl",
            role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+           email = "moritz.feigl@boku.ac.at",
+           comment = c(ORCID = "0000-0002-3545-864X"))
+Description: R implementation of Function Space Optimization (FSO), a symbolic regression method for estimating parameter transfer functions for distributed hydrological models.
 License: Apache License (>= 2.0)
 Encoding: UTF-8
 LazyData: true
@@ -17,6 +17,13 @@ Suggests:
     spelling,
     knitr,
     rmarkdown
+Imports:
+    Deriv,
+    dplyr,
+    feather,
+    parallel,
+    pbapply,
+    pbmcapply
 Language: en-US
 VignetteBuilder: knitr
 RoxygenNote: 7.0.2

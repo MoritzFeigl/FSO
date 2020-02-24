@@ -11,10 +11,13 @@
 #'
 #' @examples
 simplify_functions <- function(function_strings, function_variables, no_cores = NULL){
+
 # Calculate the number of cores
-  if(is.null(no_cores)){
-    no_cores <- parallel::detectCores() - 2
+  if (is.null(no_cores)) {
+    no_cores <- min(1, parallel::detectCores() - 2)
   }
+  no_cores <- min(parallel::detectCores(), no_cores)
+
   # Initiate cluster
   start <- Sys.time()
   functions_list <- parallel::mclapply(function_strings,
@@ -25,8 +28,6 @@ simplify_functions <- function(function_strings, function_variables, no_cores = 
   cat("\nParallel simplify took ", (as.numeric(end) - as.numeric(start))/60, "minutes\n")
   return(unlist(functions_list))
 }
-
-
 
 
 

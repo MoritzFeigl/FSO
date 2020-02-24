@@ -1,87 +1,77 @@
 #' grammar_sampler
 #'
-#' @param Grammar    A Grammar Object, created by the grammar() function.
-#' @param max_depth Maximum recursive depth used to create search Table.
-#' @param n Number of functions to be created from Grammar.
-#' @param save_feather TRUE/FALSE, saves a feather of the output list
-#' @param parallel Should code be run parallel or not? TRUE or FALSE
-#' @param no_cores The number of cores for parallel computation. If NULL than no_cores = detectCores() - 2, hence all but 2 cores.
+#' @param n Number of functions to be sampled from grammar
+#' @param grammar A Grammar Object, created by the create_grammar() function.
+#' @param max_depth Maximum recursive depth used to sample grammar.
+#' @param no_cores The number of cores for parallel computation. If NULL than all but 2 cores are used.
+#' @param save TRUE/FALSE, saves a feather of the output in the current working directory.
+#' @param unique Should only the uniquely sampled functions be kept.
 #'
-#' @return Returns a df with all sampled grammar vectors and their corresponding functions. Each row is 1 grammar vector and 1 resulting function (last element).
+#' @return Returns a character vector of all sampled functions.
 #' @export
 #'
 #' @examples
-#' g_v1 <- grammar(tf = "numeric * <eq> + numeric, <eq> + numeric, <eq> ",
-#'                 eq = "<fs>, <eq><op><fs>, <eq><op>numeric, <fs><op>numeric",
-#'                 fs = "<sp>,  <f>(<sp>), <sp><op><sp>, numeric",
-#'                 f = "exp, log",
-#'                 op = "+, -, *, /",
-#'                 sp = "slope, evi, sand, clay, elevation, hand, noise")
-#' g_v1_table <- search.table(g_v1, max.depth = 3)
-#' my_function_list <- par_grammar_sampler(n = 30000000,
-#'                                         cfgram = g_v1,
-#'                                         gram_table = g_v1_table
-#'                                         max.depth = 5)
-grammar_sampler <- function(Grammar,
+#' simple_grammar <- create_grammar(a = "<b><op><c>, <a><op><b>, <a><op><c>, 1",
+#'                                  b = "2, 4",
+#'                                  c = "1, 3, 5",
+#'                                  op = "+, -")
+#' grammar_functions <- grammar_sampler(n = 300,
+#'                                      grammar = simple_grammar,
+#'                                      max_depth = 5)
+grammar_sampler <- function(n,
+                            grammar,
                             max_depth,
-                                n,
-                                save_feather = TRUE,
-                                parallel = TRUE,
-                                no_cores = NULL){
-  # prepare grammar and table
+                            no_cores = NULL,
+                            save = TRUE,
+                            unique = TRUE,
+                            seed = NULL){
 
-  if(parallel){
-    library(parallel)
-    # Calculate the number of cores
-    if(is.null(no_cores)){
-      if(parallel::detectCores() > 2){
-        no_cores <- parallel::detectCores() - 2
-      } else no_cores <- 1
-    }
-    ns <- rep(as.integer(n/no_cores), no_cores)
-        # Parallel run with mclapply
-    start <- Sys.time()
-    cat("Run startet at: ", as.character(start))
-    RNGkind("L'Ecuyer-CMRG")
-    functions_list <- mclapply(ns, .grammar_sampler, mc.cores = no_cores,
-                               gram = gram,
-                               gram_table = gram_table,
-                               depth = max.depth,
-                               mc.set.seed = TRUE)
-    end <- Sys.time()
-    cat("\nParallelized run with ", sum(ns), " iterations needed ", (end-start)/60/60, "hours.")
-    #stopCluster(cl)
-    time_name <- substr(as.character(end), 1, 10)
-    gram_vectors <- functions_list[[1]]$gram_vector
-    functions_vector <- functions_list[[1]]$functions_vector
-    for(i in 2:no_cores){
-      gram_vectors <- cbind(gram_vectors, functions_list[[i]]$gram_vector)
-      functions_vector <- c(functions_vector, functions_list[[i]]$functions_vector)
-    }
+  # check if grammar is recursive
+  if(.is_not_recursive(grammar)) max_depth <- Inf
+
+  if(is.null(seed)) seed <- sample(10000, 1)
+  # Calculate the number of cores if not specified
+  if (is.null(no_cores)) {
+    no_cores <- min(1, parallel::detectCores() - 2)
+  }
+  no_cores <- min(parallel::detectCores(), no_cores)
+
+  # Parallel run with progress bar
+  cat("Sampling Grammar", n, "times with", no_cores, "cores:\n")
+  if(Sys.info()[["sysname"]] == "Windows"){
+    # use parlapply version for windows
+    cl <- parallel::makeCluster(no_cores)
+    parallel::clusterSetRNGStream(cl, iseed = seed)
+    parallel::clusterExport(cl, list(".grammar_sample", "grammar", "%>%", "max_depth"),
+                            envir = environment())
+    output <- pbapply::pbreplicate(n = n,
+                                   expr = .grammar_sample(grammar = grammar,
+                                                          max_depth = max_depth),
+                                   cl = cl)
+    parallel::stopCluster(cl)
   } else {
-    start <- Sys.time()
-    cat("Run startet at: ", as.character(start))
-    functions <- .functions_creator(n, gram = gram, gram_table = gram_table, depth = max.depth)
-    end <- Sys.time()
-    cat("\nNot parallelized run with", n, "iterations needed", (as.numeric(end)-as.numeric(start))/60/60, "hours.")
-    time_name <- substr(as.character(end), 1, 10)
-    gram_vectors <- functions$gram_vectors
-    functions_vector <- functions$functions_vector
-
+    RNGkind("L'Ecuyer-CMRG")
+    set.seed(seed)
+    parallel::mc.reset.stream()
+    output <- pbmcapply::pbmclapply(X = 1:n,
+                                    FUN = function(x) .grammar_sample(grammar = grammar,
+                                                                      max_depth = max_depth),
+                                    mc.cores = as.integer(no_cores)) %>%
+      unlist()
   }
+  # take unique functions
+  if(unique)  output <- unique(output)
+  # make data frame
+  output <-  data.frame("funtions" = output,
+                        stringsAsFactors = FALSE)
 
-
-  functions_list <- list("Grammatic_vectors" = gram_vectors,
-                         "transfer_functions" = functions_vector)
   # save as feather
-  if(save_feather){
-    feather::write_feather(functions_list, paste0("function_space", "-", time_name, ".csv"), row.names = FALSE)
+  if(save){
+    feather::write_feather(x = output,
+                           path = paste0("sampled_grammar", "-",
+                                         format(Sys.time(), "%d-%m-%Y-%H:%M"), ".feather"))
   }
-
-  functions_df <- data.frame(t(functions_list$Grammatic_vectors), functions_list$transfer_functions,
-                             stringsAsFactors = FALSE)
-  names(functions_df) <- c(gram_table$non.terminal, "Transfer_Function")
-  return(functions_df)
+  return(output)
 }
 
 

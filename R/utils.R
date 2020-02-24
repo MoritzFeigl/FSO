@@ -37,10 +37,11 @@
   # remove spaces
   fun <- gsub(" ", "", fun)
   nums <- length(grep("numeric", fun)) > 0 # are there "numeric" values
+
   if(nums){
     # If there are no function_variables -> return NA
     tf_splitted <- unlist(strsplit(fun, "(?=[+-/*)()])", perl = TRUE))
-    if(sum(function_variables %in% tf_splitted) == 0) return(NA)
+
     # here starts the real function
     # which numerics are only sourrounded by +/- -> reduce it to just one + numeric
     tf_len <- nchar(fun)
@@ -172,7 +173,7 @@
     fun <- names(grammar)[1]
   }
   # add count
-  count <<- ifelse(exists("count"), count + 1, 1)
+  depth_counter <<- ifelse(exists("depth_counter"), depth_counter + 1, 1)
 
   # get nonterminal
   nonterminals <- fun %>%
@@ -183,7 +184,7 @@
   regmatches(fun, gregexpr("<(.*?)>", fun)) <- "%$&"
 
   # max_number -f counts is reached
-  if (count == max_depth) {
+  if (depth_counter == max_depth) {
     # for every remaining nonterminal find the closest set of terminals or put NA
     for(i in seq_along(nonterminals)){
       teminals_id <- grep("<(.*?)>", grammar[[nonterminals[i]]], invert = TRUE)
@@ -191,13 +192,13 @@
       if(length(next_terminals) == 0) next_terminals <- "NA"
       fun <- sub("%$&", replacement = sample(next_terminals, 1), fun, fixed = TRUE)
     }
-    rm("count", envir = .GlobalEnv)
+    rm("depth_counter", envir = .GlobalEnv)
     return(fun)
   }
 
   # in case no nonterminals exist return function
   if (length(nonterminals) == 0) {
-    rm("count", envir = .GlobalEnv)
+    rm("depth_counter", envir = .GlobalEnv)
     return(fun)
   }
 
@@ -209,3 +210,14 @@
   }
   return(.recur(fun = fun, grammar = grammar, max_depth = max_depth))
 })
+
+.is_not_recursive <- function(grammar){
+  # Recursive or not?
+  nonterm <- names(grammar)
+  rec <- vector(mode ="list", length = length(grammar))
+  for(i in 1:length(grammar)){
+    rec[[i]] <- grep(nonterm[i], grammar[[i]])
+  }
+  return(length(unlist(rec)) == 0)
+}
+

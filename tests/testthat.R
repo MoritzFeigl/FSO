@@ -1,4 +1,4 @@
 library(testthat)
-library(hydroGrammar)
+library(FSO)
 
-test_check("hydroGrammar")
+test_check("FSO")

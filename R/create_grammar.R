@@ -4,7 +4,7 @@
 #' @export
 #'
 #' @examples
-#' grammar(a = "<b> + 1, <c>(<b>)",
+#' create_grammar(a = "<b> + 1, <c>(<b>)",
 #'         b = "1 + <c>(3), 2",
 #'         c = "log, exp, max")
 create_grammar <- function(...) {
