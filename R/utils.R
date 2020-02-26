@@ -219,3 +219,34 @@
   return(length(unlist(rec)) == 0)
 }
 
+.double_numeric_remover <- .trampoline(function(fun, n_iter = 4) {
+  depth_counter <<- ifelse(exists("depth_counter"), depth_counter + 1, 1)
+  fun <- gsub("numeric+numeric", "numeric", fun, fixed = TRUE)
+  fun <- gsub("numeric-numeric", "numeric", fun, fixed = TRUE)
+  fun <- gsub("numeric*numeric", "numeric", fun, fixed = TRUE)
+  fun <- gsub("numeric/numeric", "numeric", fun, fixed = TRUE)
+  if(depth_counter == n_iter) {
+    rm("depth_counter", envir = .GlobalEnv)
+    return(fun)
+  }
+  return(.recur(fun = fun, n_iter = n_iter))
+})
+
+.simple_grammar_sampler <- function(n, grammar, max_depth){
+output <- replicate(n = n,
+          expr = .grammar_sample(grammar = grammar,
+                                 max_depth = max_depth))
+return(output)
+}
+
+.var_sampler <- function(fun, variables, numbers, n_iter){
+  fun <- gsub("numeric", "<numeric>", fun)
+  fun <- gsub("var", "<var>", fun)
+  var_num_grammar <- create_grammar(fun = fun,
+                                    numeric = numbers,
+                                    var = variables)
+  sampled_functions <- .simple_grammar_sampler(n = n_iter,
+                                               grammar = var_num_grammar,
+                                               max_depth = Inf)
+  return(sampled_functions)
+}

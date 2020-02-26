@@ -40,5 +40,6 @@ simple_grammar <- create_grammar(a = "<b><op><c>, <a><op><b>, <a><op><c>, 1",
                                  op = "+, -")
 grammar_functions <- grammar_sampler(n = 300,
                                      grammar = simple_grammar,
-                                     max_depth = 5)
+                                     max_depth = 5,
+                                     save = FALSE)
 }

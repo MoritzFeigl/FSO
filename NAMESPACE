@@ -2,4 +2,4 @@
 
 export(create_grammar)
 export(grammar_sampler)
-export(simplify_functions)
+export(variable_input)

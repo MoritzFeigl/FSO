@@ -17,7 +17,8 @@
 #'                                  op = "+, -")
 #' grammar_functions <- grammar_sampler(n = 300,
 #'                                      grammar = simple_grammar,
-#'                                      max_depth = 5)
+#'                                      max_depth = 5,
+#'                                      save = FALSE)
 grammar_sampler <- function(n,
                             grammar,
                             max_depth,
@@ -29,7 +30,7 @@ grammar_sampler <- function(n,
   # check if grammar is recursive
   if(.is_not_recursive(grammar)) max_depth <- Inf
 
-  if(is.null(seed)) seed <- sample(10000, 1)
+  if(is.null(seed)) seed <- sample(1000000000, 1)
   # Calculate the number of cores if not specified
   if (is.null(no_cores)) {
     no_cores <- min(1, parallel::detectCores() - 2)
@@ -54,21 +55,23 @@ grammar_sampler <- function(n,
     set.seed(seed)
     parallel::mc.reset.stream()
     output <- unlist(pbmcapply::pbmclapply(X = 1:n,
-                                    FUN = function(x) .grammar_sample(grammar = grammar,
-                                                                      max_depth = max_depth),
-                                    mc.cores = as.integer(no_cores)))
+                                           FUN = function(x) .grammar_sample(grammar = grammar,
+                                                                             max_depth = max_depth),
+                                           mc.cores = as.integer(no_cores)))
   }
   # take unique functions
   if(unique)  output <- unique(output)
   # make data frame
-  output <-  data.frame("funtions" = output,
+  output <-  data.frame("functions" = output,
                         stringsAsFactors = FALSE)
 
   # save as feather
   if(save){
+    file_name <- paste0("sampled_grammar", "-",
+                        format(Sys.time(), "%d-%m-%Y-%H:%M"), ".feather")
+    cat("Results are saved in",file_name)
     feather::write_feather(x = output,
-                           path = paste0("sampled_grammar", "-",
-                                         format(Sys.time(), "%d-%m-%Y-%H:%M"), ".feather"))
+                           path = file_name)
   }
   return(output)
 }
