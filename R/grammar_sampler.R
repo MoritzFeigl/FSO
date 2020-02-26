@@ -10,6 +10,7 @@
 #'
 #' @return Returns a data frame with all sampled functions.
 #' @export
+#' @importFrom magrittr %>%
 #'
 #' @examples
 #' simple_grammar <- create_grammar(a = "<b><op><c>, <a><op><b>, <a><op><c>, 1",

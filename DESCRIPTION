@@ -18,8 +18,7 @@ Suggests:
     knitr,
     rmarkdown
 Imports:
-    Deriv,
-    dplyr,
+    magrittr,
     feather,
     parallel,
     pbapply,

@@ -12,7 +12,7 @@
 #'
 #' @return Returns a data frame with all sampled functions.
 #' @export
-#'
+#' @importFrom magrittr %>%
 #' @examples
 #' simple_grammar <- create_grammar(a = "<b><op><c>, <a><op><b>, <a><op><c>, 1",
 #'                                  b = "var, numeric",
@@ -65,7 +65,8 @@ variable_input <- function(functions, variables, numbers,
     parallel::clusterSetRNGStream(cl, iseed = seed)
     parallel::clusterExport(cl, list(".var_sampler", ".simple_grammar_sampler",
                                      "variables", "numbers", "create_grammar",
-                                     "var_string", "num_string", "%>%",
+                                     "var_string", "num_string",
+                                     "%>%",
                                      ".grammar_sample", "n_iter"),
                             envir = environment())
     output <- unlist(pbapply::pblapply(functions,
