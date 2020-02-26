@@ -6,6 +6,9 @@
 \usage{
 create_grammar(...)
 }
+\arguments{
+\item{...}{Named character strings. Names should correspond to nonterminals of the grammar and character strings should contain all options for a specific nonterminal seperated by commas. See example.}
+}
 \value{
 Grammar object
 }

@@ -23,12 +23,14 @@ grammar_sampler(
 
 \item{no_cores}{The number of cores for parallel computation. If NULL than all but 2 cores are used.}
 
-\item{save}{TRUE/FALSE, saves a feather of the output in the current working directory.}
+\item{save}{if a .feather of the output should be saved in the current working directory.}
 
 \item{unique}{Should only the uniquely sampled functions be kept.}
+
+\item{seed}{An integer to be supplied to set.seed, or NULL not to set reproducible seeds.}
 }
 \value{
-Returns a character vector of all sampled functions.
+Returns a data frame with all sampled functions.
 }
 \description{
 grammar_sampler
@@ -38,8 +40,11 @@ simple_grammar <- create_grammar(a = "<b><op><c>, <a><op><b>, <a><op><c>, 1",
                                  b = "2, 4",
                                  c = "1, 3, 5",
                                  op = "+, -")
-grammar_functions <- grammar_sampler(n = 300,
+\dontrun{
+grammar_functions <- grammar_sampler(n = 10,
                                      grammar = simple_grammar,
                                      max_depth = 5,
+                                     no_cores = 1,
                                      save = FALSE)
+}
 }

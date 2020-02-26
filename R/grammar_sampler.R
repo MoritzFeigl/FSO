@@ -4,10 +4,11 @@
 #' @param grammar A Grammar Object, created by the create_grammar() function.
 #' @param max_depth Maximum recursive depth used to sample grammar.
 #' @param no_cores The number of cores for parallel computation. If NULL than all but 2 cores are used.
-#' @param save TRUE/FALSE, saves a feather of the output in the current working directory.
+#' @param save if a .feather of the output should be saved in the current working directory.
 #' @param unique Should only the uniquely sampled functions be kept.
+#' @param seed An integer to be supplied to set.seed, or NULL not to set reproducible seeds.
 #'
-#' @return Returns a character vector of all sampled functions.
+#' @return Returns a data frame with all sampled functions.
 #' @export
 #'
 #' @examples
@@ -15,10 +16,13 @@
 #'                                  b = "2, 4",
 #'                                  c = "1, 3, 5",
 #'                                  op = "+, -")
-#' grammar_functions <- grammar_sampler(n = 300,
+#' \dontrun{
+#' grammar_functions <- grammar_sampler(n = 10,
 #'                                      grammar = simple_grammar,
 #'                                      max_depth = 5,
+#'                                      no_cores = 1,
 #'                                      save = FALSE)
+#' }
 grammar_sampler <- function(n,
                             grammar,
                             max_depth,
@@ -75,5 +79,4 @@ grammar_sampler <- function(n,
   }
   return(output)
 }
-
 

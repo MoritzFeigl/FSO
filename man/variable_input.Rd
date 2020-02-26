@@ -10,16 +10,56 @@ variable_input(
   numbers,
   n_iter = 100,
   no_cores = NULL,
+  var_string = "var",
+  num_string = "numeric",
   seed = NULL,
   save = TRUE
 )
 }
 \arguments{
-\item{seed}{}
+\item{functions}{A character vector or data frame (ncol = 1) of function strings.}
+
+\item{variables}{A character vector with variable names that should be sampled from.}
+
+\item{numbers}{A numeric vector with numbers that should be sampled from}
+
+\item{n_iter}{Number of samples produced for a single functions.}
+
+\item{no_cores}{Integer Number of cores to be used for computation, or NULL to set number of cores to parallel::detectCores()-2 or 1}
+
+\item{var_string}{Character used for variables in functions.}
+
+\item{num_string}{Character used for numebrs in functions.}
+
+\item{seed}{An integer to be supplied to set.seed, or NULL not to set reproducible seeds.}
+
+\item{save}{TRUE/FALSE, if a .feather of the output should be saved in the current working directory.}
 }
 \value{
-
+Returns a data frame with all sampled functions.
 }
 \description{
 variable_input
+}
+\examples{
+simple_grammar <- create_grammar(a = "<b><op><c>, <a><op><b>, <a><op><c>, 1",
+                                 b = "var, numeric",
+                                 c = "var, numeric",
+                                 op = "+, -")
+\dontrun{
+grammar_functions <- grammar_sampler(n = 10,
+                                     grammar = simple_grammar,
+                                     max_depth = 5,
+                                     no_cores = 1,
+                                     save = FALSE)
+variables <- c("x", "y")
+numbers <- seq(1, 10, 1)
+
+sampled_functions <- variable_input(functions = grammar_functions,
+                                    variables = variables, numbers = numbers,
+                                    n_iter = 100, no_cores = 1,
+                                    var_string = "var", num_string = "numeric",
+                                    seed = NULL, save = FALSE)
+
+}
 }

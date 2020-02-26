@@ -1,22 +1,47 @@
 #' variable_input
 #'
-#' @param functions
-#' @param variables
-#' @param numbers
-#' @param n_iter
-#' @param no_cores
-#' @param seed
+#' @param functions A character vector or data frame (ncol = 1) of function strings.
+#' @param variables A character vector with variable names that should be sampled from.
+#' @param numbers A numeric vector with numbers that should be sampled from
+#' @param n_iter Number of samples produced for a single functions.
+#' @param no_cores Integer Number of cores to be used for computation, or NULL to set number of cores to parallel::detectCores()-2 or 1
+#' @param var_string Character used for variables in functions.
+#' @param num_string Character used for numebrs in functions.
+#' @param seed An integer to be supplied to set.seed, or NULL not to set reproducible seeds.
+#' @param save TRUE/FALSE, if a .feather of the output should be saved in the current working directory.
 #'
-#' @return
+#' @return Returns a data frame with all sampled functions.
 #' @export
 #'
 #' @examples
+#' simple_grammar <- create_grammar(a = "<b><op><c>, <a><op><b>, <a><op><c>, 1",
+#'                                  b = "var, numeric",
+#'                                  c = "var, numeric",
+#'                                  op = "+, -")
+#' \dontrun{
+#' grammar_functions <- grammar_sampler(n = 10,
+#'                                      grammar = simple_grammar,
+#'                                      max_depth = 5,
+#'                                      no_cores = 1,
+#'                                      save = FALSE)
+#' variables <- c("x", "y")
+#' numbers <- seq(1, 10, 1)
+#'
+#' sampled_functions <- variable_input(functions = grammar_functions,
+#'                                     variables = variables, numbers = numbers,
+#'                                     n_iter = 100, no_cores = 1,
+#'                                     var_string = "var", num_string = "numeric",
+#'                                     seed = NULL, save = FALSE)
+#'
+#' }
 variable_input <- function(functions, variables, numbers,
-                           n_iter = 100, no_cores = NULL, seed = NULL, save = TRUE){
+                           n_iter = 100, no_cores = NULL,
+                           var_string = "var", num_string = "numeric",
+                           seed = NULL, save = TRUE){
 
   if(is.data.frame(functions)){
     if(ncol(functions) == 1){
-      functions <- as.character(functions)
+      functions <- functions[, 1]
     } else stop("functions must be either a character vector or a 1 column data frame with function strings.")
   } else {
     if(!is.character(functions)){
@@ -40,12 +65,14 @@ variable_input <- function(functions, variables, numbers,
     parallel::clusterSetRNGStream(cl, iseed = seed)
     parallel::clusterExport(cl, list(".var_sampler", ".simple_grammar_sampler",
                                      "variables", "numbers", "create_grammar",
+                                     "var_string", "num_string", "%>%",
                                      ".grammar_sample", "n_iter"),
                             envir = environment())
     output <- unlist(pbapply::pblapply(functions,
                                        FUN = .var_sampler,
                                        variables = variables,
                                        numbers = numbers,
+                                       var_string = var_string, num_string = num_string,
                                        n_iter = n_iter,
                                        cl = cl))
     parallel::stopCluster(cl)
@@ -57,6 +84,7 @@ variable_input <- function(functions, variables, numbers,
                                            FUN = .var_sampler,
                                            variables = variables,
                                            numbers = numbers,
+                                           var_string = var_string, num_string = num_string,
                                            n_iter = n_iter,
                                            mc.cores = as.integer(no_cores)))
   }

@@ -239,9 +239,10 @@ output <- replicate(n = n,
 return(output)
 }
 
-.var_sampler <- function(fun, variables, numbers, n_iter){
-  fun <- gsub("numeric", "<numeric>", fun)
-  fun <- gsub("var", "<var>", fun)
+.var_sampler <- function(fun, variables, numbers, n_iter,
+                         var_string, num_string){
+  fun <- gsub(num_string, "<numeric>", fun)
+  fun <- gsub(var_string, "<var>", fun)
   var_num_grammar <- create_grammar(fun = fun,
                                     numeric = numbers,
                                     var = variables)
