@@ -12,6 +12,12 @@ simplify_numerics <- function(functions,
                               no_cores = NULL,
                               save = TRUE,
                               file_name = NULL){
+
+  if(class(functions) == "character" & length(functions) == 1){
+    if(!grepl(".fst", functions)) functions <- paste0(functions, ".fst")
+    functions <- read_fst(functions)
+  }
+
   if(is.data.frame(functions)){
     if(ncol(functions) == 1){
       functions <- as.matrix(functions)[, 1]
@@ -53,13 +59,15 @@ simplify_numerics <- function(functions,
   if(save){
     if(is.null(file_name)){
       file_name <- paste0("simple_grammar", "-",
-                          format(Sys.time(), "%d-%m-%Y-%H%M"), ".feather")
+                          format(Sys.time(), "%d-%m-%Y-%H%M"), ".fst")
+    } else {
+      file_name <- paste0(file_name, ".fst")
     }
 
     cat("Results are saved in", file_name)
-    feather::write_feather(x = output,
-                           path = file_name)
+    write_fst(x = output, path = file_name, compress = 100)
   }
+  return(output)
 }
 
 

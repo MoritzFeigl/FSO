@@ -68,21 +68,19 @@ grammar_sampler <- function(n,
   # take unique functions
   if(unique)  output <- unique(output)
   # make data frame
-   output <-  data.frame("functions" = output,
-                         stringsAsFactors = FALSE)
+    output <-  data.frame("functions" = output,
+                          stringsAsFactors = FALSE)
 
   # save as feather
   if(save){
     if(is.null(file_name)){
       file_name <- paste0("sampled_grammar", "-",
-                          format(Sys.time(), "%d-%m-%Y-%H%M"), ".feather")
+                          format(Sys.time(), "%d-%m-%Y-%H%M"), ".fst")
     } else {
-      file_name <- paste0(file_name, ".feather")
+      file_name <- paste0(file_name, ".fst")
     }
-    cat("Results are saved in", file_name)
-    feather::write_feather(x = output,
-                           path = file_name)
-    #write_fst(x = output, path = file_name, compress = 100)
+    cat("Results are saved in", file_name, "\n")
+  write_fst(x = output, path = file_name, compress = 100)
   }
   return(output)
 }

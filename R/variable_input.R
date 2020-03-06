@@ -40,6 +40,11 @@ variable_input <- function(functions, variables, numbers,
                            seed = NULL,
                            file_name = NULL){
 
+  if(class(functions) == "character" & length(functions) == 1){
+    if(!grepl(".fst", functions)) functions <- paste0(functions, ".fst")
+    functions <- read_fst(functions)
+  }
+
   if(is.data.frame(functions)){
     if(ncol(functions) == 1){
       functions <- as.matrix(functions)[, 1]
@@ -67,22 +72,21 @@ variable_input <- function(functions, variables, numbers,
   if(!dir.exists(file_name))  dir.create(file_name)
 
   # parallel sampling
-  cat("Sampling varialbes and/or numerics", n_iter,
+  cat("Sampling variables and/or numerics", n_iter,
       "times for", nrow(functions), "functions with", no_cores, "cores:\n")
   # If necessary define batches for computation
-  if(n_iter > 9){
-    number_of_batches <- 10
-    batch_size <- ceiling(n_iter/number_of_batches)
-    if(batch_size > 10){
-      batch_size <- 10
+  if(n_iter > 5){
+      batch_size <- 5
       number_of_batches <- ceiling(n_iter/batch_size)
-    }
-    last_batch_size <- n_iter%%batch_size
-
+      if(n_iter %% batch_size != 0){
+    last_batch_size <- n_iter %% batch_size
+      } else last_batch_size <- batch_size
   } else {
     number_of_batches <- 1
     batch_size <- n_iter
   }
+  set.seed(seed)
+  seeds <- sample(1000000000, number_of_batches)
   # run computation over batches
   for(batch in 1:number_of_batches){
     if(number_of_batches > 1){
@@ -91,8 +95,8 @@ variable_input <- function(functions, variables, numbers,
     if(batch == number_of_batches) batch_size <- last_batch_size
 
     cl <- parallel::makeCluster(no_cores)
-    parallel::clusterSetRNGStream(cl, iseed = seed)
-    parallel::clusterExport(cl, list(".var_sampler", ".simple_grammar_sampler",
+    parallel::clusterSetRNGStream(cl, iseed = seeds[batch])
+    parallel::clusterExport(cl, list(".var_sampler",
                                      "variables", "numbers", "create_grammar",
                                      "var_string", "num_string",
                                      "%>%",
@@ -107,11 +111,12 @@ variable_input <- function(functions, variables, numbers,
                                 n_iter = batch_size,
                                 cl = cl)
     parallel::stopCluster(cl)
-    file_name_batch <- paste0(file_name, "_batch", batch, ".feather")
+    file_name_batch <- paste0(file_name, "_batch", batch, ".fst")
     output <- unique(output)
     output <-  data.frame("functions" = output,
                           stringsAsFactors = FALSE)
-    feather::write_feather(x = output,
-                           path =  file_name_batch)
+    write_fst(x = output, path = paste0(file_name, "/", file_name_batch), compress = 100)
+
+
   }
 }

@@ -118,7 +118,7 @@ compiler::cmpfun(.trampoline)
                          var_string, num_string){
   fun <- gsub(num_string, "<numeric>", fun)
   fun <- gsub(var_string, "<var>", fun)
-  var_num_grammar <- create_grammar(fun = fun,
+  var_num_grammar <-  create_grammar(fun = fun,
                                     numeric = numbers,
                                     var = variables)
   sampled_functions <- replicate(n = n_iter,
@@ -126,4 +126,4 @@ compiler::cmpfun(.trampoline)
                                              max_depth = Inf))
   return(sampled_functions)
 }
-
+.var_sampler <- compiler::cmpfun(.var_sampler)
