@@ -35,13 +35,14 @@
 #'
 #' }
 variable_input <- function(functions, variables, numbers,
-                           n_iter = 100, no_cores = NULL,
                            var_string = "var", num_string = "numeric",
-                           seed = NULL, save = TRUE){
+                           n_iter = 100, no_cores = NULL,
+                           seed = NULL,
+                           file_name = NULL){
 
   if(is.data.frame(functions)){
     if(ncol(functions) == 1){
-      functions <- functions[, 1]
+      functions <- as.matrix(functions)[, 1]
     } else stop("functions must be either a character vector or a 1 column data frame with function strings.")
   } else {
     if(!is.character(functions)){
@@ -57,47 +58,60 @@ variable_input <- function(functions, variables, numbers,
   }
   no_cores <- min(parallel::detectCores(), no_cores)
 
+  if(is.null(file_name)){
+    file_name <- paste0("variable_input_grammar", "-",
+                        format(Sys.time(), "%d-%m-%Y-%H%M"))
+  }
+  cat("Results will be saved in", file_name, "\n")
+
+  if(!dir.exists(file_name))  dir.create(file_name)
+
   # parallel sampling
-  cat("Sampling varialbes and/or numerics", n_iter, "times with", no_cores, "cores:\n")
-  if(Sys.info()[["sysname"]] == "Windows"){
-    # use parlapply version for windows
+  cat("Sampling varialbes and/or numerics", n_iter,
+      "times for", nrow(functions), "functions with", no_cores, "cores:\n")
+  # If necessary define batches for computation
+  if(n_iter > 9){
+    number_of_batches <- 10
+    batch_size <- ceiling(n_iter/number_of_batches)
+    if(batch_size > 10){
+      batch_size <- 10
+      number_of_batches <- ceiling(n_iter/batch_size)
+    }
+    last_batch_size <- n_iter%%batch_size
+
+  } else {
+    number_of_batches <- 1
+    batch_size <- n_iter
+  }
+  # run computation over batches
+  for(batch in 1:number_of_batches){
+    if(number_of_batches > 1){
+      cat(paste0("Computing batch ", batch, "/", number_of_batches, "\n"))
+    }
+    if(batch == number_of_batches) batch_size <- last_batch_size
+
     cl <- parallel::makeCluster(no_cores)
     parallel::clusterSetRNGStream(cl, iseed = seed)
     parallel::clusterExport(cl, list(".var_sampler", ".simple_grammar_sampler",
                                      "variables", "numbers", "create_grammar",
                                      "var_string", "num_string",
                                      "%>%",
-                                     ".grammar_sample", "n_iter"),
+                                     ".grammar_sample", "batch_size", ".rule",
+                                     ".recur"),
                             envir = environment())
-    output <- unlist(pbapply::pblapply(functions,
-                                       FUN = .var_sampler,
-                                       variables = variables,
-                                       numbers = numbers,
-                                       var_string = var_string, num_string = num_string,
-                                       n_iter = n_iter,
-                                       cl = cl))
+    output <- pbapply::pbsapply(functions,
+                                FUN = .var_sampler,
+                                variables = variables,
+                                numbers = numbers,
+                                var_string = var_string, num_string = num_string,
+                                n_iter = batch_size,
+                                cl = cl)
     parallel::stopCluster(cl)
-  } else {
-    RNGkind("L'Ecuyer-CMRG")
-    set.seed(seed)
-    parallel::mc.reset.stream()
-    output <- unlist(pbmcapply::pbmclapply(X = functions,
-                                           FUN = .var_sampler,
-                                           variables = variables,
-                                           numbers = numbers,
-                                           var_string = var_string, num_string = num_string,
-                                           n_iter = n_iter,
-                                           mc.cores = as.integer(no_cores)))
-  }
-  output <- unique(output)
-  output <-  data.frame("functions" = output,
-                        stringsAsFactors = FALSE)
-  if(save){
-    file_name <- paste0("variable_input_grammar", "-",
-                        format(Sys.time(), "%d-%m-%Y-%H:%M"), ".feather")
-    cat("Results are saved in",file_name)
+    file_name_batch <- paste0(file_name, "_batch", batch, ".feather")
+    output <- unique(output)
+    output <-  data.frame("functions" = output,
+                          stringsAsFactors = FALSE)
     feather::write_feather(x = output,
-                           path = file_name)
+                           path =  file_name_batch)
   }
-  return(output)
 }

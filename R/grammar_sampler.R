@@ -28,9 +28,10 @@ grammar_sampler <- function(n,
                             grammar,
                             max_depth,
                             no_cores = NULL,
-                            save = TRUE,
                             unique = TRUE,
-                            seed = NULL){
+                            seed = NULL,
+                            save = TRUE,
+                            file_name = NULL){
 
   # check if grammar is recursive
   if(.is_not_recursive(grammar)) max_depth <- Inf
@@ -48,36 +49,40 @@ grammar_sampler <- function(n,
     # use parlapply version for windows
     cl <- parallel::makeCluster(no_cores)
     parallel::clusterSetRNGStream(cl, iseed = seed)
-    parallel::clusterExport(cl, list(".grammar_sample", "grammar", "%>%", "max_depth"),
+    parallel::clusterExport(cl, list(".grammar_sample", "grammar", "%>%", "max_depth", ".recur", ".trampoline", ".rule"),
                             envir = environment())
     output <- pbapply::pbreplicate(n = n,
                                    expr = .grammar_sample(grammar = grammar,
                                                           max_depth = max_depth),
                                    cl = cl)
     parallel::stopCluster(cl)
-  } else {
-    RNGkind("L'Ecuyer-CMRG")
-    set.seed(seed)
-    parallel::mc.reset.stream()
-    output <- unlist(pbmcapply::pbmclapply(X = 1:n,
-                                           FUN = function(x) .grammar_sample(grammar = grammar,
-                                                                             max_depth = max_depth),
-                                           mc.cores = as.integer(no_cores)))
-  }
+   } else {
+     RNGkind("L'Ecuyer-CMRG")
+     set.seed(seed)
+     parallel::mc.reset.stream()
+     output <- unlist(pbmcapply::pbmclapply(X = 1:n,
+                                            FUN = compiler::cmpfun(function(x) .grammar_sample(grammar = grammar,
+                                                                              max_depth = max_depth)),
+                                            mc.cores = as.integer(no_cores)))
+   }
   # take unique functions
   if(unique)  output <- unique(output)
   # make data frame
-  output <-  data.frame("functions" = output,
-                        stringsAsFactors = FALSE)
+   output <-  data.frame("functions" = output,
+                         stringsAsFactors = FALSE)
 
   # save as feather
   if(save){
-    file_name <- paste0("sampled_grammar", "-",
-                        format(Sys.time(), "%d-%m-%Y-%H:%M"), ".feather")
-    cat("Results are saved in",file_name)
+    if(is.null(file_name)){
+      file_name <- paste0("sampled_grammar", "-",
+                          format(Sys.time(), "%d-%m-%Y-%H%M"), ".feather")
+    } else {
+      file_name <- paste0(file_name, ".feather")
+    }
+    cat("Results are saved in", file_name)
     feather::write_feather(x = output,
                            path = file_name)
+    #write_fst(x = output, path = file_name, compress = 100)
   }
   return(output)
 }
-
