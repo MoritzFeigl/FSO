@@ -34,17 +34,23 @@
 #'                                     seed = NULL, save = FALSE)
 #'
 #' }
-variable_input <- function(functions, variables, numbers,
-                           var_string = "var", num_string = "numeric",
+variable_input <- function(functions,
+                           variable_list,
+                           single_var_to_remove = NULL,
+                           necessary_var_to_be_included = NULL,
                            n_iter = 100, no_cores = NULL,
                            seed = NULL,
                            file_name = NULL){
 
+  # Check Inputs -------------------------------------------------------------------------
+  # Load data if only the name of the file is given
   if(class(functions) == "character" & length(functions) == 1){
     if(!grepl(".fst", functions)) functions <- paste0(functions, ".fst")
-    functions <- read_fst(functions)
+    tryCatch(expr = {functions <- fst::read_fst(functions)},
+             error = function(e) stop("Could not find ", functions, " in the current working directory")
+             )
   }
-
+  # check if functions are a character matrix
   if(is.data.frame(functions)){
     if(ncol(functions) == 1){
       functions <- as.matrix(functions)[, 1]
@@ -54,69 +60,126 @@ variable_input <- function(functions, variables, numbers,
       stop("functions must be either a character vector or a 1 column data frame with function strings.")
     }
   }
-  # NULL seed
-  if(is.null(seed)) seed <- sample(1000000000, 1)
-
   # Calculate the number of cores if not specified
   if (is.null(no_cores)) {
     no_cores <- min(1, parallel::detectCores() - 2)
   }
   no_cores <- min(parallel::detectCores(), no_cores)
-
+  # define file_name if not specified
   if(is.null(file_name)){
     file_name <- paste0("variable_input_grammar", "-",
                         format(Sys.time(), "%d-%m-%Y-%H%M"))
   }
+  # create folder
   cat("Results will be saved in", file_name, "\n")
-
   if(!dir.exists(file_name))  dir.create(file_name)
 
+  # in case ther is a single_var_to_remove chosen -> remove those
+  functions <- functions[functions != single_var_to_remove]
+
+  # Define batches for computation -------------------------------------------------------
+
+  # since we only want unique functions it is necessary to have all iterations for a
+  # single function in one output. Therefore, the computation splits nrow(functions)
+
+  # dim each batch: functions_subsample * n_iter = nrow(functions)
+  nrow_functions <- length(functions)
+  batch_size <- ceiling(nrow_functions/n_iter)
+  if((nrow_functions %% batch_size) != 0){
+    last_batch_size <- nrow_functions %% batch_size
+  } else last_batch_size <- batch_size
+
+  number_of_batches <- ceiling(nrow_functions/batch_size)
+
+  # setup seed for parallel processes
+  if(!is.null(seed)) {
+    set.seed(seed)
+    seeds <- sample(1000000000, number_of_batches)
+  }
+
+# parallel runs --------------------------------------------------------------------------
   # parallel sampling
   cat("Sampling variables and/or numerics", n_iter,
-      "times for", nrow(functions), "functions with", no_cores, "cores:\n")
-  # If necessary define batches for computation
-  if(n_iter > 5){
-      batch_size <- 5
-      number_of_batches <- ceiling(n_iter/batch_size)
-      if(n_iter %% batch_size != 0){
-    last_batch_size <- n_iter %% batch_size
-      } else last_batch_size <- batch_size
-  } else {
-    number_of_batches <- 1
-    batch_size <- n_iter
-  }
-  set.seed(seed)
-  seeds <- sample(1000000000, number_of_batches)
+      "times for", nrow_functions, "functions with", no_cores, "cores:\n")
+
   # run computation over batches
   for(batch in 1:number_of_batches){
+    # batch info
     if(number_of_batches > 1){
       cat(paste0("Computing batch ", batch, "/", number_of_batches, "\n"))
     }
     if(batch == number_of_batches) batch_size <- last_batch_size
+# functions part for this batch
+    functions_subsample <- (1:batch_size) + (batch - 1) * batch_size
 
+    # parallel computation
     cl <- parallel::makeCluster(no_cores)
-    parallel::clusterSetRNGStream(cl, iseed = seeds[batch])
+    if(is.null(seed)){
+      parallel::clusterSetRNGStream(cl, iseed = NULL)
+    } else {
+      parallel::clusterSetRNGStream(cl, iseed = seeds[batch])
+    }
     parallel::clusterExport(cl, list(".var_sampler",
-                                     "variables", "numbers", "create_grammar",
-                                     "var_string", "num_string",
-                                     "%>%",
-                                     ".grammar_sample", "batch_size", ".rule",
-                                     ".recur"),
+                                     "variable_list", ".create_grammar_from_list",
+                                     "necessary_var_to_be_included",
+                                     "%>%", ".recur",
+                                     ".grammar_sample", ".rule"
+                                     ),
                             envir = environment())
-    output <- pbapply::pbsapply(functions,
+    output <- pbapply::pblapply(functions[functions_subsample],
                                 FUN = .var_sampler,
-                                variables = variables,
-                                numbers = numbers,
-                                var_string = var_string, num_string = num_string,
-                                n_iter = batch_size,
+                                variable_list = variable_list,
+                                necessary_var_to_be_included = necessary_var_to_be_included,
+                                n_iter = n_iter,
                                 cl = cl)
     parallel::stopCluster(cl)
+    output <- unlist(output)
     file_name_batch <- paste0(file_name, "_batch", batch, ".fst")
+    output <- output[!is.na(output)]
     output <- unique(output)
     output <-  data.frame("functions" = output,
                           stringsAsFactors = FALSE)
-    write_fst(x = output, path = paste0(file_name, "/", file_name_batch), compress = 100)
-
+    fst::write_fst(x = output, path = paste0(file_name, "/", file_name_batch), compress = 100)
+    rm(output)
 
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
