@@ -1,5 +1,5 @@
 .rule <- function(rule_string) {
-  #### Function to turn strings into gramar rules
+  #### Function to turn strings into grammar rules
   #### inputs: rule_string (character)
   #### output: rule (list)
 

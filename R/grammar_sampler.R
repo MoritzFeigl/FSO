@@ -60,7 +60,7 @@ grammar_sampler <- function(n,
      RNGkind("L'Ecuyer-CMRG")
      set.seed(seed)
      parallel::mc.reset.stream()
-     output <- unlist(pbmcapply::pbmclapply(X = 1:n,
+     output <- unlist(parallel::mclapply(X = 1:n,
                                             FUN = compiler::cmpfun(function(x) .grammar_sample(grammar = grammar,
                                                                               max_depth = max_depth)),
                                             mc.cores = as.integer(no_cores)))
@@ -80,7 +80,7 @@ grammar_sampler <- function(n,
       file_name <- paste0(file_name, ".fst")
     }
     cat("Results are saved in", file_name, "\n")
-  write_fst(x = output, path = file_name, compress = 100)
+  fst::write_fst(x = output, path = file_name, compress = 100)
   }
   return(output)
 }
