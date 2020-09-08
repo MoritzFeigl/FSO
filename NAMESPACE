@@ -2,5 +2,7 @@
 
 export(create_grammar)
 export(grammar_sampler)
+export(simplify_functions)
+export(simplify_numerics)
 export(variable_input)
 importFrom(magrittr,"%>%")

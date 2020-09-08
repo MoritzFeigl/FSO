@@ -9,9 +9,10 @@ grammar_sampler(
   grammar,
   max_depth,
   no_cores = NULL,
-  save = TRUE,
   unique = TRUE,
-  seed = NULL
+  seed = NULL,
+  save = TRUE,
+  file_name = NULL
 )
 }
 \arguments{
@@ -23,11 +24,11 @@ grammar_sampler(
 
 \item{no_cores}{The number of cores for parallel computation. If NULL than all but 2 cores are used.}
 
-\item{save}{if a .feather of the output should be saved in the current working directory.}
-
 \item{unique}{Should only the uniquely sampled functions be kept.}
 
 \item{seed}{An integer to be supplied to set.seed, or NULL not to set reproducible seeds.}
+
+\item{save}{if a .feather of the output should be saved in the current working directory.}
 }
 \value{
 Returns a data frame with all sampled functions.

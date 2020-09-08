@@ -6,32 +6,31 @@
 \usage{
 variable_input(
   functions,
-  variables,
-  numbers,
+  variable_list,
+  single_var_to_remove = NULL,
+  necessary_var_to_be_included = NULL,
   n_iter = 100,
   no_cores = NULL,
-  var_string = "var",
-  num_string = "numeric",
   seed = NULL,
-  save = TRUE
+  file_name = NULL
 )
 }
 \arguments{
 \item{functions}{A character vector or data frame (ncol = 1) of function strings.}
 
-\item{variables}{A character vector with variable names that should be sampled from.}
-
-\item{numbers}{A numeric vector with numbers that should be sampled from}
-
 \item{n_iter}{Number of samples produced for a single functions.}
 
 \item{no_cores}{Integer Number of cores to be used for computation, or NULL to set number of cores to parallel::detectCores()-2 or 1}
 
+\item{seed}{An integer to be supplied to set.seed, or NULL not to set reproducible seeds.}
+
+\item{variables}{A character vector with variable names that should be sampled from.}
+
+\item{numbers}{A numeric vector with numbers that should be sampled from}
+
 \item{var_string}{Character used for variables in functions.}
 
 \item{num_string}{Character used for numebrs in functions.}
-
-\item{seed}{An integer to be supplied to set.seed, or NULL not to set reproducible seeds.}
 
 \item{save}{TRUE/FALSE, if a .feather of the output should be saved in the current working directory.}
 }
