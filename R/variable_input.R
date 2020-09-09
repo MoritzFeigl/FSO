@@ -47,7 +47,7 @@ variable_input <- function(functions,
   if(class(functions) == "character" & length(functions) == 1){
     if(!grepl(".fst", functions)) functions <- paste0(functions, ".fst")
     tryCatch(expr = {functions <- fst::read_fst(functions)},
-             error = function(e) stop("Could not find ", functions, " in the current working directory")
+             error = function(e) stop("Could not find ", functions)
              )
   }
   # check if functions are a character matrix
@@ -70,6 +70,8 @@ variable_input <- function(functions,
     file_name <- paste0("variable_input_grammar", "-",
                         format(Sys.time(), "%d-%m-%Y-%H%M"))
   }
+  file_name_template <- tail(unlist(strsplit(file_name, "/")), 1)
+
   # create folder
   cat("Results will be saved in", file_name, "\n")
   if(!dir.exists(file_name))  dir.create(file_name)
@@ -134,7 +136,7 @@ variable_input <- function(functions,
                                 cl = cl)
     parallel::stopCluster(cl)
     output <- unlist(output)
-    file_name_batch <- paste0(file_name, "_batch", batch, ".fst")
+    file_name_batch <- paste0(file_name_template, "_batch", batch, ".fst")
     output <- output[!is.na(output)]
     output <- unique(output)
     output <-  data.frame("functions" = output,
