@@ -21,28 +21,19 @@ simplify_functions <- function(files, batches = 10, no_cores){
     tryCatch(expr = {functions <- fst::read_fst(current_file)},
              error = function(e) stop("Could not find ", current_file, " in the current working directory")
     )
-    batch_rows <- ceiling(nrow(functions)*0.5)
-    batch_cuts <- cut(1:nrow(functions), breaks = batches)
-    functions_batches <- split.data.frame(functions, batch_cuts)
+    if(batches > 1){
+      batch_cuts <- cut(1:nrow(functions), breaks = batches)
+      functions_batches <- split.data.frame(functions, batch_cuts)
+    } else {
+      functions_batches <- list(functions)
+    }
     # parallel runs
     for(batch in 1:batches){
-    count <- count + 1
+      count <- count + 1
       cat(paste0(count, "/", length(functions_batches)*length(files)), ": Simplify functions with", no_cores, "cores", ":\n")
-    # parallel computation
-    # cl <- parallel::makeCluster(no_cores)
-    # parallel::clusterExport(cl, list(".simplifier_dec",
-    #                                 ".yac_str", ".simplify",
-    #                                 "%>%", ".str_format"
-    # ),
-    # envir = environment())
-    # output <- pbapply::pbsapply(X = functions_batches[[batch]][, 1],
-    #                            FUN = .simplifier_dec,
-    #                            cl = cl)
-    # parallel::stopCluster(cl)
-     # output <- pbmcapply::pbmclapply(X = functions_batches[[batch]][, 1],
-    #                               FUN = .simplifier_dec, mc.cores = no_cores)
+
       output <- parallel::mclapply(X = functions_batches[[batch]][, 1],
-                                      FUN = .simplifier_dec, mc.cores = no_cores)
+                                   FUN = .simplifier_dec, mc.cores = no_cores)
       output <- unlist(output)
       output <- output[!is.na(output)]
       output <- unique(output)
@@ -63,9 +54,11 @@ simplify_functions <- function(files, batches = 10, no_cores){
       batch <- as.character(batch[, 1])
       simplified_file <- c(simplified_file, batch)
     }
+    file.remove(paste0(gsub(".fst", "", current_file, fixed = TRUE),
+                       "_simplified_", 1:batches, ".fst"))
     simplified_file <- data.frame("functions" = simplified_file, stringsAsFactors = FALSE)
     file_name_all <- paste0(gsub(".fst", "", current_file, fixed = TRUE),
-                        "_simplified.fst")
+                            "_simplified.fst")
     fst::write_fst(x = simplified_file, path = file_name_all, compress = 100)
   }
 }

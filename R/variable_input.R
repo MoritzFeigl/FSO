@@ -48,7 +48,7 @@ variable_input <- function(functions,
     if(!grepl(".fst", functions)) functions <- paste0(functions, ".fst")
     tryCatch(expr = {functions <- fst::read_fst(functions)},
              error = function(e) stop("Could not find ", functions)
-             )
+    )
   }
   # check if functions are a character matrix
   if(is.data.frame(functions)){
@@ -99,7 +99,7 @@ variable_input <- function(functions,
     seeds <- sample(1000000000, number_of_batches)
   }
 
-# parallel runs --------------------------------------------------------------------------
+  # parallel runs --------------------------------------------------------------------------
   # parallel sampling
   cat("Sampling variables and/or numerics", n_iter,
       "times for", nrow_functions, "functions with", no_cores, "cores:\n")
@@ -111,9 +111,8 @@ variable_input <- function(functions,
       cat(paste0("Computing batch ", batch, "/", number_of_batches, "\n"))
     }
     if(batch == number_of_batches) batch_size <- last_batch_size
-# functions part for this batch
+    # functions part for this batch
     functions_subsample <- (1:batch_size) + (batch - 1) * batch_size
-
     # parallel computation
     cl <- parallel::makeCluster(no_cores)
     if(is.null(seed)){
@@ -126,8 +125,8 @@ variable_input <- function(functions,
                                      "necessary_var_to_be_included",
                                      "%>%", ".recur",
                                      ".grammar_sample", ".rule"
-                                     ),
-                            envir = environment())
+    ),
+    envir = environment())
     output <- pbapply::pblapply(functions[functions_subsample],
                                 FUN = .var_sampler,
                                 variable_list = variable_list,
