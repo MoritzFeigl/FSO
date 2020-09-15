@@ -1,3 +1,15 @@
+#' distribution_sampler
+#'
+#' @param functions
+#' @param variable_df
+#' @param scaling_bounds
+#' @param file_name
+#' @param no_cores
+#'
+#' @return
+#' @export
+#'
+#' @examples
 distribution_sampler <- function(functions, variable_df,
                                  scaling_bounds = NULL,
                                  file_name = NULL,
