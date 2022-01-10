@@ -1,6 +1,8 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
+[![DOI](https://zenodo.org/badge/238998076.svg)](https://zenodo.org/badge/latestdoi/238998076)
+
 # FSO
 
 This R package contains functions necessary to apply the Function Space
